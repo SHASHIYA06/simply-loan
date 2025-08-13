@@ -1,0 +1,89 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, CheckCircle, XCircle } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+
+export default function ComparisonTable({ offers, banks, loanAmount, tenure }) {
+    const calculateEMI = (principal, rate, months) => {
+        const monthlyRate = rate / (12 * 100);
+        if (monthlyRate === 0) return principal / months;
+        return Math.round((principal * monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1));
+    };
+
+    const formatCurrency = (amount) => `₹${amount.toLocaleString('en-IN')}`;
+
+    const comparisonData = offers.map(offer => {
+        const bank = banks.find(b => b.id === offer.bank_id);
+        const emi = calculateEMI(loanAmount, offer.min_interest, tenure);
+        const totalInterest = (emi * tenure) - loanAmount;
+        const totalPayable = emi * tenure;
+        return { ...offer, bank, emi, totalInterest, totalPayable };
+    });
+
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle className="text-slate-900 dark:text-white">Side-by-Side Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[200px]">Feature</TableHead>
+                                    {comparisonData.map(data => (
+                                        <TableHead key={data.id} className="text-center">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <img src={data.bank?.logo_url || 'https://via.placeholder.com/80x40'} alt={data.bank?.name} className="h-10 object-contain"/>
+                                                <span>{data.bank?.name}</span>
+                                            </div>
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow>
+                                    <TableCell className="font-semibold">Interest Rate</TableCell>
+                                    {comparisonData.map(data => <TableCell key={data.id} className="text-center font-bold text-blue-600 dark:text-blue-400 text-lg">{data.min_interest}%</TableCell>)}
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell className="font-semibold">Monthly EMI</TableCell>
+                                    {comparisonData.map(data => <TableCell key={data.id} className="text-center">{formatCurrency(data.emi)}</TableCell>)}
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell className="font-semibold">Processing Fee</TableCell>
+                                    {comparisonData.map(data => <TableCell key={data.id} className="text-center">{data.processing_fee}%</TableCell>)}
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell className="font-semibold">Total Interest</TableCell>
+                                    {comparisonData.map(data => <TableCell key={data.id} className="text-center">{formatCurrency(data.totalInterest)}</TableCell>)}
+                                </TableRow>
+                                 <TableRow>
+                                    <TableCell className="font-semibold">Total Payable</TableCell>
+                                    {comparisonData.map(data => <TableCell key={data.id} className="text-center font-bold">{formatCurrency(data.totalPayable)}</TableCell>)}
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell className="font-semibold">Apply</TableCell>
+                                    {comparisonData.map(data => (
+                                        <TableCell key={data.id} className="text-center">
+                                            <Button asChild size="sm">
+                                                <Link to={createPageUrl("ApplicationForm") + `?offer=${data.id}`}>
+                                                    Apply Now <ArrowRight className="w-4 h-4 ml-2"/>
+                                                </Link>
+                                            </Button>
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+        </motion.div>
+    );
+}
