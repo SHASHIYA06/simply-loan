@@ -1,0 +1,41 @@
+import React from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import { TrendingUp, Users, Building2, Award } from "lucide-react";
+
+export default function StatsSection() {
+  const stats = [
+    { icon: Users, number: "10,000+", label: "Happy Customers", color: "text-blue-600" },
+    { icon: Building2, number: "15+", label: "Bank Partners", color: "text-green-600" },
+    { icon: TrendingUp, number: "₹500+ Cr", label: "Loans Disbursed", color: "text-purple-600" },
+    { icon: Award, number: "4.9/5", label: "Customer Rating", color: "text-orange-600" }
+  ];
+
+  return (
+    <section className="py-16 bg-white/80 backdrop-blur-sm">
+      <div className="container mx-auto px-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.5 }}
+            >
+              <Card className="text-center border-0 shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
+                <CardContent className="p-6">
+                  <div className={`w-12 h-12 mx-auto mb-4 ${stat.color.replace('text-', 'bg-')}/10 rounded-2xl flex items-center justify-center`}>
+                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
+                  <h3 className="text-3xl font-bold text-slate-900 mb-1">{stat.number}</h3>
+                  <p className="text-slate-600 font-medium">{stat.label}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
