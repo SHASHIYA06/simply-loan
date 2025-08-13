@@ -1,0 +1,89 @@
+import React from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calculator, TrendingDown, Clock, Banknote } from "lucide-react";
+
+export default function EMICalculator({ loanAmount, tenure, bestRate }) {
+  const calculateEMI = (principal, rate, months) => {
+    const monthlyRate = rate / (12 * 100);
+    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) / 
+                (Math.pow(1 + monthlyRate, months) - 1);
+    return Math.round(emi);
+  };
+
+  const emi = calculateEMI(loanAmount, bestRate, tenure);
+  const totalPayment = emi * tenure;
+  const totalInterest = totalPayment - loanAmount;
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent" />
+        <CardHeader className="relative">
+          <CardTitle className="flex items-center gap-2 text-2xl">
+            <Calculator className="w-6 h-6" />
+            EMI Calculator
+          </CardTitle>
+          <p className="text-blue-100">Based on best available rate: {bestRate}% p.a.</p>
+        </CardHeader>
+        <CardContent className="relative">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 mx-auto mb-3 bg-white/20 rounded-xl flex items-center justify-center">
+                <Banknote className="w-6 h-6" />
+              </div>
+              <p className="text-blue-100 text-sm mb-1">Monthly EMI</p>
+              <p className="text-2xl font-bold">{formatCurrency(emi)}</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 mx-auto mb-3 bg-white/20 rounded-xl flex items-center justify-center">
+                <TrendingDown className="w-6 h-6" />
+              </div>
+              <p className="text-blue-100 text-sm mb-1">Total Interest</p>
+              <p className="text-2xl font-bold">{formatCurrency(totalInterest)}</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 mx-auto mb-3 bg-white/20 rounded-xl flex items-center justify-center">
+                <Clock className="w-6 h-6" />
+              </div>
+              <p className="text-blue-100 text-sm mb-1">Total Payment</p>
+              <p className="text-2xl font-bold">{formatCurrency(totalPayment)}</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 mx-auto mb-3 bg-white/20 rounded-xl flex items-center justify-center">
+                <Calculator className="w-6 h-6" />
+              </div>
+              <p className="text-blue-100 text-sm mb-1">Interest Rate</p>
+              <p className="text-2xl font-bold">{bestRate}%</p>
+            </div>
+          </div>
+
+          <div className="mt-8 p-4 bg-white/10 rounded-xl backdrop-blur-sm">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-blue-100">Loan Amount</span>
+              <span className="font-semibold">{formatCurrency(loanAmount)}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm mt-2">
+              <span className="text-blue-100">Tenure</span>
+              <span className="font-semibold">{Math.round(tenure / 12)} years</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
