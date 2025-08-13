@@ -1,0 +1,66 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  LayoutDashboard,
+  Users,
+  Building2,
+  Newspaper
+} from "lucide-react";
+
+import LeadManagement from "../components/admin/LeadManagement";
+import BankManagement from "../components/admin/BankManagement";
+import NewsManager from "../components/admin/NewsManager";
+import DashboardOverview from "../components/admin/DashboardOverview";
+
+export default function AdminDashboard() {
+
+  return (
+    <div className="container mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-lg mt-2">
+            Welcome, Chandra Shekhar Mishra. Manage your platform here.
+          </p>
+        </motion.div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-2 rounded-xl">
+            <TabsTrigger value="overview" className="flex items-center gap-2 px-4 py-2">
+              <LayoutDashboard className="w-5 h-5" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="flex items-center gap-2 px-4 py-2">
+              <Users className="w-5 h-5" />
+              Lead Management
+            </TabsTrigger>
+            <TabsTrigger value="banks" className="flex items-center gap-2 px-4 py-2">
+              <Building2 className="w-5 h-5" />
+              Banks & Offers
+            </TabsTrigger>
+            <TabsTrigger value="news" className="flex items-center gap-2 px-4 py-2">
+              <Newspaper className="w-5 h-5" />
+              News Management
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+              <DashboardOverview />
+          </TabsContent>
+          <TabsContent value="leads">
+            <LeadManagement />
+          </TabsContent>
+          <TabsContent value="banks">
+            <BankManagement />
+          </TabsContent>
+          <TabsContent value="news">
+            <NewsManager />
+          </TabsContent>
+        </Tabs>
+      </div>
+  );
+}
