@@ -1,0 +1,92 @@
+{
+  "name": "Application",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "Reference to customer"
+    },
+    "lead_id": {
+      "type": "string",
+      "description": "Reference to original lead"
+    },
+    "loan_type": {
+      "type": "string",
+      "enum": [
+        "home",
+        "personal",
+        "education",
+        "business",
+        "vehicle",
+        "gold"
+      ],
+      "description": "Type of loan"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Requested loan amount"
+    },
+    "tenure_months": {
+      "type": "integer",
+      "description": "Requested tenure in months"
+    },
+    "income_monthly": {
+      "type": "number",
+      "description": "Monthly income"
+    },
+    "employment_type": {
+      "type": "string",
+      "enum": [
+        "salaried",
+        "self_employed",
+        "business",
+        "freelancer"
+      ],
+      "description": "Employment type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "review",
+        "approved",
+        "rejected",
+        "disbursed"
+      ],
+      "default": "new",
+      "description": "Application status"
+    },
+    "documents": {
+      "type": "object",
+      "properties": {
+        "identity_proof": {
+          "type": "string"
+        },
+        "address_proof": {
+          "type": "string"
+        },
+        "income_proof": {
+          "type": "string"
+        },
+        "bank_statements": {
+          "type": "string"
+        }
+      },
+      "description": "Document URLs"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes"
+    },
+    "preferred_bank": {
+      "type": "string",
+      "description": "Preferred bank ID"
+    }
+  },
+  "required": [
+    "loan_type",
+    "amount",
+    "tenure_months",
+    "income_monthly"
+  ]
+}
