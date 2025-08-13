@@ -1,0 +1,37 @@
+{
+  "name": "Bank",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Bank name"
+    },
+    "code": {
+      "type": "string",
+      "description": "Bank code (e.g., SBI, HDFC)"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL to bank logo"
+    },
+    "website": {
+      "type": "string",
+      "description": "Bank website"
+    },
+    "country": {
+      "type": "string",
+      "default": "India",
+      "description": "Country"
+    },
+    "rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Bank rating out of 5"
+    }
+  },
+  "required": [
+    "name",
+    "code"
+  ]
+}
