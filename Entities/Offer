@@ -1,0 +1,73 @@
+{
+  "name": "Offer",
+  "type": "object",
+  "properties": {
+    "bank_id": {
+      "type": "string",
+      "description": "Reference to bank"
+    },
+    "loan_type": {
+      "type": "string",
+      "enum": [
+        "home",
+        "personal",
+        "education",
+        "business",
+        "vehicle",
+        "gold"
+      ],
+      "description": "Type of loan"
+    },
+    "min_interest": {
+      "type": "number",
+      "description": "Minimum interest rate"
+    },
+    "max_interest": {
+      "type": "number",
+      "description": "Maximum interest rate"
+    },
+    "processing_fee": {
+      "type": "number",
+      "description": "Processing fee percentage"
+    },
+    "min_tenure_months": {
+      "type": "integer",
+      "description": "Minimum tenure in months"
+    },
+    "max_tenure_months": {
+      "type": "integer",
+      "description": "Maximum tenure in months"
+    },
+    "min_amount": {
+      "type": "number",
+      "description": "Minimum loan amount"
+    },
+    "max_amount": {
+      "type": "number",
+      "description": "Maximum loan amount"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "api",
+        "manual",
+        "scraper"
+      ],
+      "default": "manual",
+      "description": "Source of offer data"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key features of the loan"
+    }
+  },
+  "required": [
+    "bank_id",
+    "loan_type",
+    "min_interest",
+    "max_interest"
+  ]
+}
