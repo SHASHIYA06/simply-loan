@@ -1,0 +1,77 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
+
+export default function Step2_LoanDetails({ onNext, onBack, initialData }) {
+  const [data, setData] = useState(initialData || {
+    loan_type: 'home',
+    amount: 1000000,
+    tenure_months: 240,
+    income_monthly: 50000,
+    employment_type: 'salaried',
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext({ loan: data });
+  };
+
+  const loanTypes = ["home", "personal", "education", "business", "vehicle", "gold"];
+  const employmentTypes = ["salaried", "self_employed", "business", "freelancer"];
+
+  return (
+    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle>Loan & Financial Details</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Loan Type</Label>
+              <Select value={data.loan_type} onValueChange={(val) => setData({...data, loan_type: val})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {loanTypes.map(type => <SelectItem key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)} Loan</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Employment Type</Label>
+              <Select value={data.employment_type} onValueChange={(val) => setData({...data, employment_type: val})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {employmentTypes.map(type => <SelectItem key={type} value={type}>{type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="amount">Loan Amount (₹)</Label>
+              <Input id="amount" type="number" value={data.amount} onChange={(e) => setData({...data, amount: e.target.value})} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tenure">Tenure (Months)</Label>
+              <Input id="tenure" type="number" value={data.tenure_months} onChange={(e) => setData({...data, tenure_months: e.target.value})} required />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="income">Monthly Income (₹)</Label>
+              <Input id="income" type="number" value={data.income_monthly} onChange={(e) => setData({...data, income_monthly: e.target.value})} required />
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <Button type="button" variant="outline" onClick={onBack}>
+              <ArrowLeft className="mr-2 w-4 h-4" /> Back
+            </Button>
+            <Button type="submit">
+              Next <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
