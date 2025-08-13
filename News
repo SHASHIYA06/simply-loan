@@ -1,0 +1,93 @@
+
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Newspaper, ArrowRight, Calendar } from 'lucide-react';
+import { News } from '@/entities/News';
+import { format } from 'date-fns';
+
+export default function NewsPage() {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      setLoading(true);
+      try {
+        const newsData = await News.list('-published_date');
+        setArticles(newsData);
+      } catch (error) {
+        console.error("Failed to fetch news:", error);
+      }
+      setLoading(false);
+    };
+    fetchNews();
+  }, []);
+
+  return (
+    <div className="container mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-12"
+      >
+        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+          Financial News & <span className="text-blue-600">Updates</span>
+        </h1>
+        <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+          Stay informed with the latest news and trends in the financial world.
+        </p>
+      </motion.div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {loading ? (
+          [...Array(6)].map((_, i) => (
+            <Card key={i} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-lg border-0 animate-pulse">
+                <div className="h-48 bg-slate-200 dark:bg-slate-700 rounded-t-xl"></div>
+                <CardContent className="p-6">
+                    <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-5/6"></div>
+                </CardContent>
+            </Card>
+          ))
+        ) : (
+          articles.map((article, index) => (
+            <motion.div
+              key={article.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Card className="group overflow-hidden bg-white dark:bg-slate-800/80 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 border-0 h-full flex flex-col">
+                <div className="overflow-hidden">
+                    <img src={article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2070&auto=format&fit=crop'} alt={article.title} className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" />
+                </div>
+                <CardHeader>
+                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{format(new Date(article.published_date), 'MMMM d, yyyy')}</span>
+                  </div>
+                  <CardTitle className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                    {article.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
+                    {article.content}
+                  </p>
+                </CardContent>
+                <div className="p-6 pt-0">
+                  <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-semibold flex items-center group-hover:gap-3 transition-all duration-300">
+                    Read More <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
+              </Card>
+            </motion.div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
