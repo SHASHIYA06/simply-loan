@@ -1,0 +1,269 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { X, MessageSquare, Phone, ArrowRight, CheckCircle } from "lucide-react";
+import { Lead } from "@/entities/Lead";
+import { User } from "@/entities/User";
+import { SendEmail } from "@/integrations/Core";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+
+export default function LeadCaptureForm({ onClose }) {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    loan_interest: "",
+    source: "landing",
+    consent_whatsapp: false
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Get current user to send admin notification
+      let currentUser;
+      try {
+        currentUser = await User.me();
+      } catch (error) {
+        // User not logged in, continue without admin notification
+        console.log("No user logged in, skipping admin notification");
+      }
+
+      const leadData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        loan_interest: formData.loan_interest,
+        source: formData.source,
+        consent_whatsapp: formData.consent_whatsapp,
+        source_url: window.location.href,
+        status: "new"
+      };
+
+      const newLead = await Lead.create(leadData);
+
+      // Send admin notification only if user is logged in
+      if (currentUser) {
+        try {
+          await SendEmail({
+            to: currentUser.email,
+            subject: `New Loan Lead: ${formData.name}`,
+            body: `
+              <h2>New Lead Captured</h2>
+              <p>A new lead has been captured from the landing page:</p>
+              <ul>
+                <li><strong>Name:</strong> ${formData.name}</li>
+                <li><strong>Phone:</strong> ${formData.phone}</li>
+                <li><strong>Email:</strong> ${formData.email}</li>
+                <li><strong>Loan Type:</strong> ${formData.loan_interest}</li>
+              </ul>
+              <p>Please follow up via the admin dashboard.</p>
+            `
+          });
+        } catch (emailError) {
+          console.log("Admin notification email failed:", emailError);
+        }
+      }
+
+      // Send confirmation to lead if they provided email
+      if (formData.email) {
+        try {
+          await SendEmail({
+            to: formData.email,
+            from_name: "Andromeda Loans",
+            subject: "Thank you for your interest in Andromeda Loans",
+            body: `
+              <h2>Thank you for your interest!</h2>
+              <p>Hi ${formData.name},</p>
+              <p>Thank you for your interest in our ${formData.loan_interest} loan services.</p>
+              <p>We have received your inquiry and our team will contact you shortly with the best offers from India's top banks.</p>
+              <p>To complete your application, please click the link below:</p>
+              <p><a href="${window.location.origin}${createPageUrl("ApplicationForm")}?lead=${newLead.id}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Complete Your Application</a></p>
+              <p>Best regards,<br/>Andromeda Sales & Distribution Team</p>
+            `
+          });
+        } catch (emailError) {
+          console.log("Lead confirmation email failed:", emailError);
+        }
+      }
+      
+      setIsSuccess(true);
+      setTimeout(() => {
+        onClose();
+        navigate(createPageUrl("ApplicationForm") + `?lead=${newLead.id}`);
+      }, 2000);
+
+    } catch (error) {
+      console.error("Error creating lead:", error);
+      alert("Something went wrong. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const loanTypes = [
+    { value: "home", label: "Home Loan" },
+    { value: "personal", label: "Personal Loan" },
+    { value: "business", label: "Business Loan" },
+    { value: "vehicle", label: "Vehicle Loan" },
+    { value: "education", label: "Education Loan" },
+    { value: "gold", label: "Gold Loan" }
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md"
+      >
+        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl">
+          <CardHeader className="relative pb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              onClick={onClose}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+            <CardTitle className="text-2xl font-bold text-center text-slate-900 mb-2">
+              {isSuccess ? "Success!" : "Get Started Today"}
+            </CardTitle>
+            <p className="text-center text-slate-600">
+              {isSuccess ? "We've sent the next steps to your email." : "Fill in your details to find the best loan options."}
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {isSuccess ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center">
+                <motion.div initial={{scale: 0}} animate={{scale: 1}} transition={{type: 'spring', stiffness: 260, damping: 20}}>
+                   <CheckCircle className="w-16 h-16 text-green-500" />
+                </motion.div>
+                <p className="mt-4 text-lg text-slate-700">You will be redirected shortly...</p>
+              </div>
+            ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter your full name"
+                  required
+                  className="h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+91 98765 43210"
+                  required
+                  className="h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="your.email@example.com"
+                  className="h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="loan_interest">Loan Type *</Label>
+                <Select 
+                  value={formData.loan_interest}
+                  onValueChange={(value) => setFormData({ ...formData, loan_interest: value })}
+                  required
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Select loan type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loanTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-start space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="consent"
+                  checked={formData.consent_whatsapp}
+                  onChange={(e) => setFormData({ ...formData, consent_whatsapp: e.target.checked })}
+                  className="mt-1"
+                  required
+                />
+                <Label htmlFor="consent" className="text-sm text-slate-600 leading-relaxed">
+                  I agree to receive updates via Email/WhatsApp and authorize Andromeda to contact me
+                </Label>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                {isLoading ? (
+                  "Processing..."
+                ) : (
+                  <>
+                    Get My Loan Options <ArrowRight className="ml-2 w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+            )}
+
+            {!isSuccess && (
+              <div className="pt-4 border-t border-slate-200">
+                <div className="flex items-center justify-center space-x-6 text-sm text-slate-600">
+                  <div className="flex items-center space-x-2">
+                    <MessageSquare className="w-4 h-4 text-green-600" />
+                    <span>WhatsApp Support</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4 text-blue-600" />
+                    <span>Expert Guidance</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
+  );
+}
