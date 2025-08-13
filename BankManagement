@@ -1,0 +1,235 @@
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Building2, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  TrendingUp,
+  Percent,
+  Calendar,
+  DollarSign
+} from "lucide-react";
+import { Bank } from "@/entities/Bank";
+import { Offer } from "@/entities/Offer";
+import { RateChangeHistory } from "@/entities/RateChangeHistory";
+
+import BanksList from "../components/admin/BanksList";
+import OffersList from "../components/admin/OffersList";
+import AddBankModal from "../components/admin/AddBankModal";
+import AddOfferModal from "../components/admin/AddOfferModal";
+import RateHistoryChart from "../components/admin/RateHistoryChart";
+
+export default function BankManagement() {
+  const [banks, setBanks] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [rateHistory, setRateHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddBank, setShowAddBank] = useState(false);
+  const [showAddOffer, setShowAddOffer] = useState(false);
+  const [stats, setStats] = useState({
+    totalBanks: 0,
+    totalOffers: 0,
+    avgRate: 0,
+    recentChanges: 0
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [banksData, offersData, historyData] = await Promise.all([
+        Bank.list(),
+        Offer.list(),
+        RateChangeHistory.list('-created_date')
+      ]);
+      
+      setBanks(banksData);
+      setOffers(offersData);
+      setRateHistory(historyData);
+
+      // Calculate stats
+      const totalBanks = banksData.length;
+      const totalOffers = offersData.length;
+      const avgRate = offersData.length > 0 
+        ? (offersData.reduce((sum, offer) => sum + offer.min_interest, 0) / offersData.length).toFixed(2)
+        : 0;
+      const recentChanges = historyData.filter(h => {
+        const changeDate = new Date(h.created_date);
+        const lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        return changeDate > lastWeek;
+      }).length;
+
+      setStats({
+        totalBanks,
+        totalOffers,
+        avgRate: parseFloat(avgRate),
+        recentChanges
+      });
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+    setLoading(false);
+  };
+
+  const handleAddBank = () => {
+    setShowAddBank(false);
+    loadData();
+  };
+
+  const handleAddOffer = () => {
+    setShowAddOffer(false);
+    loadData();
+  };
+
+  const statCards = [
+    {
+      title: "Total Banks",
+      value: stats.totalBanks,
+      icon: Building2,
+      color: "from-blue-500 to-blue-600",
+      bgColor: "bg-blue-50"
+    },
+    {
+      title: "Active Offers",
+      value: stats.totalOffers,
+      icon: DollarSign,
+      color: "from-green-500 to-green-600",
+      bgColor: "bg-green-50"
+    },
+    {
+      title: "Avg. Interest Rate",
+      value: `${stats.avgRate}%`,
+      icon: Percent,
+      color: "from-purple-500 to-purple-600",
+      bgColor: "bg-purple-50"
+    },
+    {
+      title: "Recent Changes",
+      value: stats.recentChanges,
+      icon: TrendingUp,
+      color: "from-orange-500 to-orange-600",
+      bgColor: "bg-orange-50"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-4xl font-bold text-slate-900">Banks & Offers</h1>
+              </div>
+              <p className="text-slate-600 text-lg">
+                Manage banking partners and loan offers
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowAddBank(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Bank
+              </Button>
+              <Button
+                onClick={() => setShowAddOffer(true)}
+                variant="outline"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Offer
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statCards.map((stat, index) => (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">{stat.title}</p>
+                      <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                    </div>
+                    <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
+                      <stat.icon className={`w-6 h-6 bg-gradient-to-br ${stat.color} bg-clip-text`} style={{WebkitTextFillColor: 'transparent'}} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="banks" className="space-y-6">
+          <TabsList className="bg-white/80 backdrop-blur-sm p-1">
+            <TabsTrigger value="banks" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              Banks ({banks.length})
+            </TabsTrigger>
+            <TabsTrigger value="offers" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Offers ({offers.length})
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Rate History
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="banks">
+            <BanksList banks={banks} loading={loading} onUpdate={loadData} />
+          </TabsContent>
+
+          <TabsContent value="offers">
+            <OffersList offers={offers} banks={banks} loading={loading} onUpdate={loadData} />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <RateHistoryChart history={rateHistory} offers={offers} banks={banks} loading={loading} />
+          </TabsContent>
+        </Tabs>
+
+        {/* Modals */}
+        {showAddBank && (
+          <AddBankModal onClose={() => setShowAddBank(false)} onAdd={handleAddBank} />
+        )}
+
+        {showAddOffer && (
+          <AddOfferModal 
+            banks={banks}
+            onClose={() => setShowAddOffer(false)} 
+            onAdd={handleAddOffer} 
+          />
+        )}
+      </div>
+    </div>
+  );
+}
