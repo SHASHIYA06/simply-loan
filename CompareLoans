@@ -1,0 +1,139 @@
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Calculator, 
+  Filter, 
+  ArrowRight, 
+  Building2,
+  Users,
+  Briefcase
+} from "lucide-react";
+import { Bank } from "@/entities/Bank";
+import { Offer } from "@/entities/Offer";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+
+import EMICalculator from "../components/compare/EMICalculator";
+import OfferCard from "../components/compare/OfferCard";
+import ComparisonTable from "../components/compare/ComparisonTable";
+
+export default function CompareLoans() {
+  const [banks, setBanks] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [filteredOffers, setFilteredOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    loan_type: "home",
+    amount: 2500000,
+    tenure_months: 240,
+    employment_type: 'salaried',
+    monthly_income: 75000
+  });
+  const [selectedOffers, setSelectedOffers] = useState([]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [filters, offers]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [banksData, offersData] = await Promise.all([Bank.list(), Offer.list()]);
+      setBanks(banksData);
+      setOffers(offersData);
+    } catch (error) { console.error("Error loading data:", error); }
+    setLoading(false);
+  };
+
+  const applyFilters = () => {
+    let filtered = offers.filter(offer => 
+      offer.loan_type === filters.loan_type &&
+      offer.min_amount <= filters.amount &&
+      offer.max_amount >= filters.amount &&
+      offer.min_tenure_months <= filters.tenure_months &&
+      offer.max_tenure_months >= filters.tenure_months
+    );
+    filtered.sort((a, b) => a.min_interest - b.min_interest);
+    setFilteredOffers(filtered);
+  };
+
+  const calculateEMI = (principal, rate, tenure) => {
+    const monthlyRate = rate / (12 * 100);
+    if (monthlyRate === 0) return principal / tenure;
+    return Math.round((principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / (Math.pow(1 + monthlyRate, tenure) - 1));
+  };
+
+  const toggleOfferSelection = (offer) => {
+    setSelectedOffers(prev => 
+      prev.find(o => o.id === offer.id)
+        ? prev.filter(o => o.id !== offer.id)
+        : [...prev, offer].slice(0, 3)
+    );
+  };
+  
+  const loanTypes = ["home", "personal", "business", "vehicle", "education", "gold"];
+  const employmentTypes = ["salaried", "self_employed", "business"];
+  const bestRate = filteredOffers[0]?.min_interest || 8.5;
+
+  return (
+    <div className="container mx-auto">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+          Compare <span className="text-blue-600">Loan Offers</span>
+        </h1>
+        <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+          Use our advanced calculator to find the perfect loan. Adjust your details and compare top offers side-by-side.
+        </p>
+      </motion.div>
+
+      <div className="grid lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-4 xl:col-span-3">
+          <Card className="sticky top-24 border-0 shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white"><Filter /> Loan Filters</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+                <div><Label>Loan Type</Label><Select value={filters.loan_type} onValueChange={(v) => setFilters(f=>({...f, loan_type: v}))}><SelectTrigger className="capitalize"><SelectValue /></SelectTrigger><SelectContent>{loanTypes.map(t => <SelectItem key={t} value={t} className="capitalize">{t} Loan</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Employment Type</Label><Select value={filters.employment_type} onValueChange={(v) => setFilters(f=>({...f, employment_type: v}))}><SelectTrigger className="capitalize"><SelectValue/></SelectTrigger><SelectContent>{employmentTypes.map(t=><SelectItem key={t} value={t} className="capitalize">{t.replace('_',' ')}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Loan Amount (₹)</Label><Slider value={[filters.amount]} onValueChange={([v]) => setFilters(f=>({...f,amount:v}))} max={10000000} min={50000} step={50000} /><div className="text-right font-semibold text-blue-600">₹{filters.amount.toLocaleString('en-IN')}</div></div>
+                <div><Label>Tenure (Years)</Label><Slider value={[filters.tenure_months]} onValueChange={([v]) => setFilters(f=>({...f,tenure_months:v}))} max={360} min={12} step={12} /><div className="text-right font-semibold text-blue-600">{Math.round(filters.tenure_months/12)} Years</div></div>
+                <div><Label>Monthly Income (₹)</Label><Input type="number" value={filters.monthly_income} onChange={(e) => setFilters(f=>({...f, monthly_income: parseInt(e.target.value)}))}/></div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-8 xl:col-span-9 space-y-8">
+          <EMICalculator loanAmount={filters.amount} tenure={filters.tenure_months} bestRate={bestRate} />
+          
+          {selectedOffers.length > 0 && <ComparisonTable offers={selectedOffers} banks={banks} loanAmount={filters.amount} tenure={filters.tenure_months} />}
+
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Best {filters.loan_type} Loan Offers ({filteredOffers.length})</h2>
+            {loading ? [...Array(3)].map((_, i) => <div key={i} className="h-48 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />)
+            : filteredOffers.map((offer) => {
+                const bank = banks.find(b => b.id === offer.bank_id);
+                const emi = calculateEMI(filters.amount, offer.min_interest, filters.tenure_months);
+                return <OfferCard key={offer.id} offer={offer} bank={bank} emi={emi} onToggleSelect={() => toggleOfferSelection(offer)} isSelected={selectedOffers.some(o => o.id === offer.id)} />;
+            })}
+             {!loading && filteredOffers.length === 0 && (
+                <Card className="border-0 bg-slate-100 dark:bg-slate-800 text-center p-12">
+                  <Calculator className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-300 mb-2">No offers found</h3>
+                  <p className="text-slate-500 dark:text-slate-400">Try adjusting your filters to see more options</p>
+                </Card>
+              )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
