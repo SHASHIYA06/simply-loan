@@ -1,0 +1,86 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { ArrowRight, ArrowLeft, Upload, CheckCircle, Loader2 } from 'lucide-react';
+import { UploadFile } from '@/integrations/Core';
+
+const FileUploadInput = ({ label, onUpload, uploadedFile }) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        const { file_url } = await UploadFile({ file });
+        onUpload(file_url);
+      } catch (err) {
+        console.error("Upload failed", err);
+        alert("File upload failed.");
+      }
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex items-center gap-4">
+        <label className="flex-1 cursor-pointer">
+          <div className="flex items-center justify-center w-full h-12 border-2 border-dashed rounded-lg">
+            {isUploading ? <Loader2 className="animate-spin" /> : 
+             uploadedFile ? <CheckCircle className="text-green-500" /> : <Upload />}
+          </div>
+          <input type="file" className="hidden" onChange={handleFileChange} disabled={isUploading || !!uploadedFile} />
+        </label>
+        {uploadedFile && <a href={uploadedFile} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">View File</a>}
+      </div>
+    </div>
+  );
+};
+
+export default function Step3_Documents({ onSubmit, onBack, isLoading }) {
+  const [docs, setDocs] = useState({
+    identity_proof: '',
+    address_proof: '',
+    income_proof: '',
+    bank_statements: ''
+  });
+
+  const handleUpload = (docType, url) => {
+    setDocs(prev => ({ ...prev, [docType]: url }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({ documents: docs });
+  };
+  
+  return (
+    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle>Document Upload</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <p className="text-sm text-slate-600">Please upload PDF or image files for the following documents.</p>
+          <div className="grid md:grid-cols-2 gap-6">
+            <FileUploadInput label="Identity Proof (Aadhaar/PAN)" onUpload={(url) => handleUpload('identity_proof', url)} uploadedFile={docs.identity_proof} />
+            <FileUploadInput label="Address Proof (Utility Bill)" onUpload={(url) => handleUpload('address_proof', url)} uploadedFile={docs.address_proof} />
+            <FileUploadInput label="Income Proof (Salary Slips)" onUpload={(url) => handleUpload('income_proof', url)} uploadedFile={docs.income_proof} />
+            <FileUploadInput label="Bank Statements (Last 6 months)" onUpload={(url) => handleUpload('bank_statements', url)} uploadedFile={docs.bank_statements} />
+          </div>
+          <div className="flex justify-between">
+            <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
+              <ArrowLeft className="mr-2 w-4 h-4" /> Back
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Submitting...' : 'Submit Application'} <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
