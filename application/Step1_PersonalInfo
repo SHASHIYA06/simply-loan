@@ -1,0 +1,60 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ArrowRight } from 'lucide-react';
+
+export default function Step1_PersonalInfo({ onNext, initialData }) {
+  const [data, setData] = useState(initialData || {
+    name: '',
+    email: '',
+    phone: '',
+    pan: '',
+    address: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext({ personal: data });
+  };
+
+  return (
+    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle>Personal Information</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input id="name" value={data.name} onChange={(e) => setData({...data, name: e.target.value})} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input id="email" type="email" value={data.email} onChange={(e) => setData({...data, email: e.target.value})} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input id="phone" value={data.phone} onChange={(e) => setData({...data, phone: e.target.value})} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pan">PAN Card</Label>
+              <Input id="pan" value={data.pan} onChange={(e) => setData({...data, pan: e.target.value})} required />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="address">Full Address</Label>
+            <Input id="address" value={data.address} onChange={(e) => setData({...data, address: e.target.value})} required />
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit">
+              Next <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
